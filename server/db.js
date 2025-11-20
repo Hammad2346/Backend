@@ -3,10 +3,11 @@ const {Pool}=pkg
 
 export const pool = new Pool(
     {
-        user:'hammad',
+        user:'postgres',
         host:'localhost',
-        port:'5432',
-        password:'secret',
-        database:'chatbotdb'
+        port:'5433',
+        password:'hammad',
+        database:'chatbotdb',
+        search_path: "chatbot"
     }
 )
