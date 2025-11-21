@@ -29,6 +29,7 @@ app.post("/login", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
 function auth(req, res, next) {
   const header = req.headers.authorization;
   if (!header) return res.status(401).json({ error: "Missing token" });
@@ -96,22 +97,47 @@ app.post("/savechat", auth, async (req, res) => {
     res.status(500).json({ error: "Database error", details: error.message })
   }
 })
-app.get("/getchats",async (req,res)=>{
+
+app.patch("/updatetitle", async (req,res)=>{
   try {
-    const user_id=req.body
-    const chats=await pool.query("SELECT * FROM chatbot.chats WHERE user_id=$1",[user_id])
-    res.status(200).send(chats)
+    const {chat_id,newtitle}=req.body
+    const result=await pool.query("UPDATE chatbot.chats SET title=$1 WHERE chat_id=$2 RETURNING chat_id",[newtitle,chat_id])
+    res.json({
+      message:"chat updated successfully",
+      chat_id:chat_id
+    })
   } catch (error) {
     console.log(error)
   }
 })
+
+app.get("/getchats",auth, async (req,res)=>{
+  try {
+    const user_id  = req.user.user_id;
+    const chats=await pool.query("SELECT * FROM chatbot.chats WHERE user_id=$1",[user_id])
+    res.json({
+      chats:chats.rows,
+      message:"chats received successfully"
+    })
+  } catch (error) {
+    console.log(error)
+  }
+})
+
 app.get("/getchat", async (req,res)=>{
   try {
-    
+    const { chat_id } = req.query;
+    const chat= await pool.query("SELECT * FROM chatbot.messages WHERE chat_id=$1",[chat_id])
+    console.log(chat)
+    res.json({
+      message: "chat found",
+      chat: chat.rows
+    })    
   } catch (error) {
     console.log(error)
   }
 })
+
 app.listen(3000, () => {
   console.log("server running on port 3000");
 });
