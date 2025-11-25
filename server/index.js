@@ -42,6 +42,7 @@ function auth(req, res, next) {
     res.status(401).json({ error: "Invalid token" });
   }
 }
+
 app.get("/all", async (req, res) => {
   try {
     const result = await pool.query("SELECT * FROM chatbot.users");
@@ -68,6 +69,21 @@ app.post("/reg", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
+app.get("/getuser", auth, async(req,res)=>{
+  try {
+    const user_id=req.user.user_id
+    const result= await pool.query("SELECT * FROM chatbot.users WHERE user_id=$1",[user_id])
+    res.json({
+      user:result.rows[0]
+    }
+      
+    )
+  } catch (error) {
+    console.log("error sending user",error)
+  }
+})
+
 app.post("/savemessage", async (req,res)=>{
   try {
     const message= req.body
@@ -82,7 +98,6 @@ app.post("/savechat", auth, async (req, res) => {
   try {
     const user_id = req.user.user_id;
     const { title } = req.body
-    console.log(user_id)
     const result = await pool.query(
       "INSERT INTO chatbot.chats (user_id, title) VALUES ($1, $2) RETURNING chat_id, created_at",
       [user_id, title]
@@ -101,6 +116,7 @@ app.post("/savechat", auth, async (req, res) => {
 app.patch("/updatetitle", async (req,res)=>{
   try {
     const {chat_id,newtitle}=req.body
+    console.log(chat_id,newtitle)
     const result=await pool.query("UPDATE chatbot.chats SET title=$1 WHERE chat_id=$2 RETURNING chat_id",[newtitle,chat_id])
     res.json({
       message:"chat updated successfully",
@@ -128,7 +144,6 @@ app.get("/getchat", async (req,res)=>{
   try {
     const { chat_id } = req.query;
     const chat= await pool.query("SELECT * FROM chatbot.messages WHERE chat_id=$1",[chat_id])
-    console.log(chat)
     res.json({
       message: "chat found",
       chat: chat.rows
